@@ -2,16 +2,32 @@
  * file        : utils.mjs
  * description : This file is a JavaScript module intended to
  *               contain utility functions.
+ * exports     : [ createTag/1
+ *               , createDropdown/1
+ *               , createFolder/2
+ *               , addBookmarkContent/0
+ *               , validateForm/0
+ *               ]
+ */
+/**
+ * @file This file is a JavaScript module intended to
+ *     contain utility functions.
  *
- *
+ * @module utils
+ * 
  */
 
-/*
+/**
  * Returns a new HTML tag.
  *
- * @param data : an object consisting of a tag,
- *               array of classes, and an object
- *               of attribute keys and their values.
+ * @author Brady McGrath
+ *
+ * @param {Object} data           - An object describing the HTML tag
+ *     to construct.
+ * @param {string}   data.tag     - The HTML tag to create.
+ * @param {Object}   data.attrs   - An object of HTML attributes
+ *     to set.
+ * @param {string[]} data.classes - An array of classes to set.
  * @return a new HTML tag object.
  *
  */
@@ -36,12 +52,14 @@ export function createTag(data) {
     return elem;
 }
 
-/*
+/**
  * Returns a div tag that represents a folder dropdown.
  *
- * @param parentId : the numeric ID of the parent bookmark
- *                   node.
- * @return a dropdown HTML element.
+ * @author Brady McGrath
+ *
+ * @param {string} parentId - the numeric ID of the
+ *     parent bookmark node as a string.
+ * @return {Object} a dropdown HTML element.
  *
  */
 export function createDropdown(parentId) {
@@ -53,14 +71,16 @@ export function createDropdown(parentId) {
                      });
 }
 
-/*
+/**
  * Returns an a tag that represents a clickable
  * bookmark to be included in a folder dropdown.
  *
- * @param bookmarkId    : the numeric ID of the bookmark
- *                        node.
- * @param bookmarkTitle : the bookmark's title.
- * @return a bookmark HTML element.
+ * @author Brady McGrath
+ *
+ * @param {string} bookmarkId    - the numeric ID of the bookmark
+ *     node as a string.
+ * @param {string} bookmarkTitle - the bookmark's title.
+ * @return {Object} a bookmark HTML element.
  *
  */
 function createBookmark(bookmarkId, bookmarkTitle) {
@@ -72,15 +92,17 @@ function createBookmark(bookmarkId, bookmarkTitle) {
                      });
 }
 
-/*
+/**
  * Returns a div tag with an inner a tag which
  * represents a clickable, and dropdownable,
  * folder.
  *
- * @param folderId    : the numeric ID of the bookmark folder
- *                      node.
- * @param folderTitle : the bookmark folder's title.
- * @return a folder HTML element.
+ * @author Brady McGrath
+ *
+ * @param {string} folderId    - the numeric ID of the bookmark folder
+ *     node as a string.
+ * @param {string} folderTitle - the bookmark folder's title.
+ * @return {Object} a folder HTML element.
  *
  */
 export function createFolder(folderId, folderTitle) {
@@ -101,7 +123,7 @@ export function createFolder(folderId, folderTitle) {
                              , classes: ['accordion']
                              });
     folder.innerHTML = "<b>" + folderTitle + "</b>";
-    if (folderTitle.length == 0) {
+    if (folderTitle.length === 0) {
         folder.innerHTML = "<b>untitled</b>";
     }
     folderDiv.appendChild(folder);
@@ -109,36 +131,39 @@ export function createFolder(folderId, folderTitle) {
 }
 
 
-/*
+/**
  * Walks the bookmark tree and adds the folders
  * to the popup menu.
  *
- * @return undefined
+ * @author Brady McGrath
+ *
+ * @return {undefined}
  *
  */
 export function addBookmarkContent() {
     var folderDiv, dropdownDiv, bmarkContent;
-    const folderDivs   = [];
     const dropdownDivs = [];
 
-    /*
-    * Walks the bookmark tree adding
-    * list tags for each folder it finds
-    * along the way.
-    *
-    *
-    * @param bs: the child array.
-    * @return undefined
-    *
-    */
+    /**
+     * Walks the bookmark tree adding
+     * list tags for each folder it finds
+     * along the way.
+     *
+     * @author Brady McGrath
+     *
+     * @param {Object[]} bs - the child array.
+     * @return {undefined}
+     *
+     */
     function walkChildren(bs) {
-        if (bs == undefined || bs.length == 0) {
+        // bs is undefined.
+        if (!bs) {
             return;
         }
         for (let i = 0; i < bs.length; i++) {
             let node = bs[i];
             // Folder case.
-            if (node.url == undefined && node.id != 0) {
+            if (!node.url && node.id !== "0") {
                 if (!dropdownDiv && folderDiv) {
                     dropdownDiv = createDropdown(node.parentId);
                     folderDiv.appendChild(dropdownDiv);
@@ -148,10 +173,11 @@ export function addBookmarkContent() {
                 // Create a folder div.
                 folderDiv = createFolder(node.id, node.title);
                                       
-                console.log("Created folder div with id " + folderDiv.id);
+                console.log("Created folder div with id " +
+                            folderDiv.id);
                 // Add root bookmark folder to bookmarkContent
                 // div.
-                if (node.parentId == 0) {
+                if (node.parentId === "0") {
                     bmarkContent.appendChild(folderDiv);
                 }
                 // A dropdown already exists, so this folder
@@ -163,17 +189,18 @@ export function addBookmarkContent() {
                           " to dropdown div " +
                           dropdownDiv.id);
                     dropdownDivs.push(dropdownDiv);
-                    console.log("pushed dropdown div " + dropdownDiv.id +
-                          " to dropdown div stack");
+                    console.log("pushed dropdown div " +
+                                dropdownDiv.id +
+                                " to dropdown div stack");
                     dropdownDiv = undefined;
                 }
             }
             // Bookmark case.
-            if (node.url != undefined && node.id != 0) {
-                // Since the above check weeds out the
-                // root node, we only need to check if
-                // we've already created a dropdown div.
-                if (node.parentId != 0 && !dropdownDiv) {
+            if (node.url && node.id !== "0") {
+                // In Chrome, no bookmarks have a parentId
+                // of zero, so all we need to do is check
+                // that dropdownDiv is undefined.
+                if (!dropdownDiv) {
                     // Create a new bookmark "list."
                     dropdownDiv = createDropdown(node.parentId);
                     console.log("Created dropdown div with id " +
@@ -192,6 +219,8 @@ export function addBookmarkContent() {
                 bmark.addEventListener("click", () => {
                     chrome.tabs.create({ url: node.url });
                 });
+                console.log("Found bookmark with parentId " +
+                            node.parentId);
                 console.log("Created bookmark with title " +
                       bmark.innerText);
                 // If a dropdown was created, then append
@@ -213,7 +242,11 @@ export function addBookmarkContent() {
                 }
             }
             // Time to moon walk.
+            console.log("ABOUT TO WALK CHILDREN OF BOOKMARK " +
+                        "NODE WITH ID " + node.id);
             walkChildren(node.children);
+            console.log("FINISHED WALK OF CHILDREN FOR NODE " +
+                        "WITH ID " + node.id);
         }
         // About to go back up one level, so pop
         // off the dropdown stack.
@@ -250,30 +283,17 @@ export function addBookmarkContent() {
     });
 }
 
-/*
- * Validates the search bar text and if the
- * input is valid, passes it to a callback
- * that searches for that text in the bookmarks.
- *
- * ==== Still in progress. ====
- *
- * @return undefined
- *
- */
-export function validateForm() {
-    var val = document.forms["searchForm"]["searchBar"].value;
-    alert(val);
-}
-
-/*
+/**
  * Toggles, i.e., shows, the bookmark titles/folders,
  * that reside in a clicked on folder matching a
  * given ID in the popup menu.
  *
- * @param folder   : the folder element whose contents
- *                   need to be displayed.
- * @param folderID : the ID of the folder that was just
- *                   clicked.
+ * @author Brady McGrath
+ *
+ * @param {Object} folder   - the folder element whose contents
+ *     need to be displayed.
+ * @param {string} folderID - the ID of the folder that was just
+ *     clicked.
  * @return undefined
  *
  */
@@ -293,13 +313,15 @@ function toggleBookmarks(folder, folderId) {
     }
 }
 
-/*
+/**
  * Attaches on-click listerners to the bookmark
  * folders in the popupmenu.
  *
- * @param folders : the folders to attach an onclick
- *                  listener to.
- * @return undefined
+ * @author Brady McGrath
+ *
+ * @param {Object[]} folders - the folders to attach an onclick
+ *     listener to.
+ * @return {undefined}
  *
  */
 function attachFolderListeners(folders) {
